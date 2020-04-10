@@ -53,7 +53,7 @@ public abstract class ConfigNodeImpl implements ConfigNode, Commentable {
     }
 
     public void setParent(ConfigBranch parent) {
-        if (this.parent != null) {
+        if (this.parent != null && this.parent != parent) {
             throw new IllegalStateException(this + " needs to be detached before changing the parent");
         }
         this.parent = parent;
