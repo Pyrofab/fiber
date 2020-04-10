@@ -2,7 +2,6 @@ package me.zeroeightsix.fiber.tree;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collection;
 
 /**
  * A node that can hold any amount of children
@@ -39,15 +38,15 @@ public interface ConfigBranch extends ConfigTree, ConfigNode, Commentable {
     ConfigNode lookup(String name);
 
     /**
-     * Returns a collection of this group's children.
+     * Returns a collection of this branch's children.
      *
-     * <p> The returned collection is unmodifiable, and guaranteed not to have two nodes with the same name.
+     * <p> The returned collection is guaranteed not to have two nodes with the same name.
      *
      * @return the set of children
      */
     @Nonnull
     @Override
-    Collection<ConfigNode> getItems();
+    NodeCollection getItems();
 
     /**
      * Returns {@code true} if this node should be serialized separately from its parent.

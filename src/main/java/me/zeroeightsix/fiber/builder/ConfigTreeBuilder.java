@@ -61,14 +61,15 @@ public class ConfigTreeBuilder implements ConfigTree {
      * Returns a collection of this builder's children.
      *
      * <p> The returned collection is guaranteed to have no two nodes with the same name.
-     * Elements may be removed from it, but no elements may be added directly.
+     * Elements may be freely added and removed from it.
      *
      * @return the set of children
-     * @see #add(ConfigNode)
+     * @see NodeCollection#add(ConfigNode, boolean)
+     * @see NodeCollection#removeByName(String)
      */
     @Nonnull
     @Override
-    public Collection<ConfigNode> getItems() {
+    public NodeCollection getItems() {
         return items;
     }
 
@@ -220,30 +221,28 @@ public class ConfigTreeBuilder implements ConfigTree {
     }
 
     /**
-     * Attempts to introduce a new child to this node.
+     * Attempts to introduce a new child to this builder.
      *
      * @param item The child to add
+     * @return {@code this}, for chaining
      * @throws DuplicateChildException if there was already a child by the same name
      * @see Property
      */
     public ConfigTreeBuilder add(@Nonnull ConfigNode item) throws DuplicateChildException {
-        add(item, false);
+        this.items.add(item);
         return this;
     }
 
     /**
-     * Attempts to introduce a new child to this node.
+     * Attempts to introduce a new child to this builder.
      *
      * @param item      The child to add
      * @param overwrite whether existing items should be overwritten
+     * @return {@code this}, for chaining
      * @throws DuplicateChildException if there was already a child by the same name
-     * @see Property
      */
     public ConfigTreeBuilder add(@Nonnull ConfigNode item, boolean overwrite) throws DuplicateChildException {
-        if (overwrite) {
-            this.items.removeByName(item.getName());
-        }
-        this.items.add(item);
+        this.items.add(item, overwrite);
         return this;
     }
 
@@ -285,7 +284,7 @@ public class ConfigTreeBuilder implements ConfigTree {
         if (this.parent != null) {
             assert name != null;
             try {
-                this.parent.add(built);
+                this.parent.getItems().add(built);
             } catch (RuntimeFiberException e) {
                 throw new RuntimeFiberException("Failed to attach built node to parent", e);
             }

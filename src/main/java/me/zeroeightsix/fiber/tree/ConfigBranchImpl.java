@@ -50,7 +50,7 @@ public class ConfigBranchImpl extends ConfigNodeImpl implements ConfigBranch {
 
     @Nonnull
     @Override
-    public Collection<ConfigNode> getItems() {
+    public NodeCollection getItems() {
         return items;
     }
 

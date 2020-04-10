@@ -48,11 +48,18 @@ public class IndexedNodeCollection extends AbstractCollection<ConfigNode> implem
 
     @Override
     public boolean add(ConfigNode item) throws DuplicateChildException {
+        return add(item, false);
+    }
+
+    @Override
+    public boolean add(ConfigNode item, boolean overwrite) throws DuplicateChildException {
         Objects.requireNonNull(item);
         if (!(item instanceof ConfigNodeImpl)) {
             throw new IllegalArgumentException("Invalid config node implementation " + item);
         }
-        if (this.items.containsKey(item.getName())) {
+        if (overwrite) {
+            this.removeByName(item.getName());
+        } else if (this.items.containsKey(item.getName())) {
             throw new DuplicateChildException("Attempt to replace node " + item.getName());
         }
         this.items.put(item.getName(), (ConfigNodeImpl) item);

@@ -13,7 +13,7 @@ import java.util.Iterator;
 public class NodeOperations {
 
     /**
-     * Merges two {@code ConfigNode} objects.
+     * Merges two {@code ConfigTree}s.
      *
      * <p> The first parameter {@code from} will be stripped of its children,
      * and {@code to} will receive all of {@code from}'s children.
@@ -23,12 +23,12 @@ public class NodeOperations {
      * @param from  The {@code ConfigNode} that will be read from, but not mutated.
      * @param to    The mutated {@link ConfigBranch} that will inherit <code>from</code>'s values and nodes.
      */
-    public static void moveChildren(ConfigTree from, ConfigTreeBuilder to) {
+    public static void moveChildren(ConfigTree from, ConfigTree to) {
         try {
             for (Iterator<ConfigNode> it = from.getItems().iterator(); it.hasNext(); ) {
                 ConfigNode item = it.next();
                 it.remove();
-                to.add(item, true);
+                to.getItems().add(item, true);
             }
         } catch (DuplicateChildException e) {
             throw new RuntimeFiberException("Failed to merge nodes", e);
