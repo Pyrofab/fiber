@@ -46,6 +46,13 @@ public class IndexedNodeCollection extends AbstractCollection<ConfigNode> implem
         };
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    public Spliterator</*out*/ ConfigNode> spliterator() {
+        // The Spliterator interface is read-only, so we consider its element type covariant
+        return (Spliterator/*<out ConfigNode>*/) this.items.values().spliterator();
+    }
+
     @Override
     public boolean add(ConfigNode item) throws DuplicateChildException {
         return add(item, false);
