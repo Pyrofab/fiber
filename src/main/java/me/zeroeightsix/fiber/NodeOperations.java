@@ -50,7 +50,7 @@ public class NodeOperations {
             if (parent != null) {
                 parent.getItems().remove(value);
             }
-            to.add(value, true);
+            to.withChild(value, true);
         } catch (DuplicateChildException e) {
             throw new RuntimeFiberException("Failed to merge value", e);
         }

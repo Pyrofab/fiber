@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  *
  * <p> Usage example:
  * <pre>{@code
- * ConfigNode config = new ConfigNodeBuilder()
+ * ConfigNode config = new ConfigTreeBuilder()
  *         .beginValue("version", "1.0.0")
  *             .withFinality()
  *             .beginConstraints() // checks the default value
@@ -52,9 +52,18 @@ public class ConfigTreeBuilder implements ConfigTree {
     private boolean serializeSeparately;
     private ConfigBranch built;
 
-    public ConfigTreeBuilder() {
-        this.parent = null;
-        this.name = null;
+    /**
+     * Creates a new builder with initial settings.
+     *
+     * @param parent the initial parent
+     * @param name   the initial name
+     * @see ConfigTree#builder()
+     * @see ConfigBranch#builder(ConfigTreeBuilder, String)
+     */
+    public ConfigTreeBuilder(@Nullable ConfigTreeBuilder parent, @Nullable String name) {
+        if (parent != null && name == null) throw new IllegalArgumentException("A child node needs a name");
+        this.parent = parent;
+        this.name = name;
     }
 
     /**
@@ -149,12 +158,33 @@ public class ConfigTreeBuilder implements ConfigTree {
      *
      * @param pojo an object serving as a base to reflectively generate a config tree
      * @return {@code this}, for chaining
+     * @see Setting
+     * @see Settings
+     * @see AnnotatedSettings#applyToNode(ConfigTreeBuilder, Object)
+     */
+    public ConfigTreeBuilder applyFromPojo(Object pojo) throws FiberException {
+        return applyFromPojo(pojo, AnnotatedSettings.DEFAULT_SETTINGS);
+    }
+
+    /**
+     * Configure this builder using a POJO (Plain Old Java Object).
+     *
+     * <p> The node's structure will be based on the {@code pojo}'s fields,
+     * recursively generating settings. The generated settings can be configured
+     * in the {@code pojo}'s class declaration, using annotations such as {@link Setting}.
+     *
+     * <p> The generated {@link ConfigLeaf}s will be bound to their respective fields,
+     * setting the latter when the former's value is {@linkplain ConfigLeaf#setValue(Object) updated}.
+     *
+     * @param pojo an object serving as a base to reflectively generate a config tree
+     * @param settings an {@link AnnotatedSettings} instance used to configure this builder
+     * @return {@code this}, for chaining
      * @see Setting @Setting
      * @see Settings @Settings
      * @see AnnotatedSettings#applyToNode(ConfigTreeBuilder, Object)
      */
-    public ConfigTreeBuilder applyFromPojo(Object pojo) throws FiberException {
-        AnnotatedSettings.applyToNode(this, pojo);
+    public ConfigTreeBuilder applyFromPojo(Object pojo, AnnotatedSettings settings) throws FiberException {
+        settings.applyToNode(this, pojo);
         return this;
     }
 
@@ -162,7 +192,7 @@ public class ConfigTreeBuilder implements ConfigTree {
      * Creates a scalar {@code ConfigLeafBuilder}.
      *
      * @param type the class of the type of value the {@link ConfigLeaf} produced by the builder holds
-     * @param <T> the type {@code type} represents
+     * @param <T>  the type {@code type} represents
      * @return the newly created builder
      * @see ConfigLeafBuilder ConfigLeafBuilder
      */
@@ -174,7 +204,7 @@ public class ConfigTreeBuilder implements ConfigTree {
      * Creates a {@code ConfigLeafBuilder} with the given default value.
      *
      * @param defaultValue the default value of the {@link ConfigLeaf} that will be produced by the created builder.
-     * @param <T> the type of value the {@link ConfigLeaf} produced by the builder holds
+     * @param <T>          the type of value the {@link ConfigLeaf} produced by the builder holds
      * @return the newly created builder
      * @see ConfigLeafBuilder
      * @see ConfigAggregateBuilder
@@ -197,7 +227,7 @@ public class ConfigTreeBuilder implements ConfigTree {
      * Creates an aggregate {@code ConfigLeafBuilder}.
      *
      * @param defaultValue the default array of values the {@link ConfigLeaf} will hold.
-     * @param <E> the type of elements {@code defaultValue} holds
+     * @param <E>          the type of elements {@code defaultValue} holds
      * @return the newly created builder
      * @see ConfigAggregateBuilder Aggregate
      */
@@ -210,9 +240,9 @@ public class ConfigTreeBuilder implements ConfigTree {
      * Creates an aggregate {@code ConfigLeafBuilder}.
      *
      * @param defaultValue the default collection of values the {@link ConfigLeaf} will hold.
-     * @param elementType the class of the type of elements {@code defaultValue} holds
-     * @param <C> the type of collection {@code defaultValue} is
-     * @param <E> the type {@code elementType} represents
+     * @param elementType  the class of the type of elements {@code defaultValue} holds
+     * @param <C>          the type of collection {@code defaultValue} is
+     * @param <E>          the type {@code elementType} represents
      * @return the newly created builder
      */
     public <C extends Collection<E>, E> ConfigAggregateBuilder<C, E> beginAggregateValue(@Nonnull String name, @Nonnull C defaultValue, @Nullable Class<E> elementType) {
@@ -228,7 +258,7 @@ public class ConfigTreeBuilder implements ConfigTree {
      * @throws DuplicateChildException if there was already a child by the same name
      * @see Property
      */
-    public ConfigTreeBuilder add(@Nonnull ConfigNode item) throws DuplicateChildException {
+    public ConfigTreeBuilder withChild(@Nonnull ConfigNode item) throws DuplicateChildException {
         this.items.add(item);
         return this;
     }
@@ -241,7 +271,7 @@ public class ConfigTreeBuilder implements ConfigTree {
      * @return {@code this}, for chaining
      * @throws DuplicateChildException if there was already a child by the same name
      */
-    public ConfigTreeBuilder add(@Nonnull ConfigNode item, boolean overwrite) throws DuplicateChildException {
+    public ConfigTreeBuilder withChild(@Nonnull ConfigNode item, boolean overwrite) throws DuplicateChildException {
         this.items.add(item, overwrite);
         return this;
     }
@@ -263,7 +293,7 @@ public class ConfigTreeBuilder implements ConfigTree {
      * @return the created node builder
      */
     public ConfigTreeBuilder fork(String name) {
-        return new ConfigTreeBuilder().withName(name).withParent(this);
+        return new ConfigTreeBuilder(this, name);
     }
 
     /**
@@ -292,11 +322,11 @@ public class ConfigTreeBuilder implements ConfigTree {
         return built;
     }
 
-    public ConfigTreeBuilder finishNode() {
-        return finishNode(n -> { });
+    public ConfigTreeBuilder finishBranch() {
+        return finishBranch(n -> { });
     }
 
-    public ConfigTreeBuilder finishNode(Consumer<ConfigBranch> action) {
+    public ConfigTreeBuilder finishBranch(Consumer<ConfigBranch> action) {
         if (parent == null) {
             throw new IllegalStateException("finishNode should not be called for a root node. Use build instead.");
         }
