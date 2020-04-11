@@ -34,6 +34,12 @@ public interface NodeCollection extends Collection<ConfigNode> {
 
     ConfigNode getByName(String name);
 
+    /**
+     * Attempts to remove an item from this node by name.
+     *
+     * @param name the name of the child that should be removed
+     * @return the child if removed, otherwise {@code null}
+     */
     @Nullable
     ConfigNode removeByName(String name);
 }
